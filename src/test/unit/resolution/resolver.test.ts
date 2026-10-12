@@ -2,8 +2,9 @@ import { describe, expect, it } from 'vitest';
 import {
   createResolutionCache,
   resolveAsset,
+  resolveAssetSync,
 } from '../../../shared/resolution/resolver';
-import { createFsHost, fixturesRoot, ref } from './testHost';
+import { createFsHost, createMemoryHost, fixturesRoot, ref } from './testHost';
 
 describe('resolveAsset orchestration', () => {
   const host = createFsHost();
@@ -99,5 +100,94 @@ describe('resolveAsset orchestration', () => {
     expect(cache.resolutions.size).toBeGreaterThan(0);
     const b = await resolveAsset(opts);
     expect(b).toEqual(a);
+  });
+
+  it('resolveAssetSync matches resolveAsset for relative + tsconfig', async () => {
+    const root = fixturesRoot('aliases');
+    const opts = {
+      reference: ref({
+        originalSpecifier: '@/assets/icon.svg?react',
+        physicalSpecifier: '@/assets/icon.svg',
+        query: 'react',
+        kind: 'svg' as const,
+      }),
+      importerPath: `${root}/src/components/App.tsx`,
+      importerVersion: 1,
+      aliases: {},
+      host,
+    };
+    const asyncResult = await resolveAsset(opts);
+    const syncResult = resolveAssetSync(opts);
+    expect(syncResult).toEqual(asyncResult);
+  });
+
+  it('resolveAssetSync relative SCSS', () => {
+    const root = fixturesRoot('aliases');
+    const result = resolveAssetSync({
+      reference: ref({
+        physicalSpecifier: './Card.module.scss',
+        kind: 'scss',
+      }),
+      importerPath: `${root}/src/components/Card.tsx`,
+      importerVersion: 1,
+      aliases: {},
+      host,
+    });
+    expect(result?.physicalUri).toBe(`${root}/src/components/Card.module.scss`);
+  });
+
+  it('resolveAssetSync: throwing readFile does not throw (Mode A safety)', () => {
+    const root = fixturesRoot('aliases');
+    const throwingHost = {
+      fileExists: () => true,
+      readFile: (): Uint8Array => {
+        throw new Error('tsserver readFile missing');
+      },
+    };
+    expect(() =>
+      resolveAssetSync({
+        reference: ref({
+          physicalSpecifier: '@/assets/icon.svg',
+          kind: 'svg',
+        }),
+        importerPath: `${root}/src/components/App.tsx`,
+        importerVersion: 1,
+        aliases: {},
+        host: throwingHost,
+      }),
+    ).not.toThrow();
+  });
+
+  it('does not sticky-cache negative misses', async () => {
+    const root = '/mem/proj';
+    const files: Record<string, string> = {
+      [`${root}/tsconfig.json`]: JSON.stringify({
+        compilerOptions: { baseUrl: '.', paths: { '@/*': ['src/*'] } },
+      }),
+      [`${root}/src/App.tsx`]: 'export {};',
+    };
+    const cache = createResolutionCache();
+    const opts = {
+      reference: ref({
+        physicalSpecifier: '@/assets/icon.svg',
+        kind: 'svg' as const,
+      }),
+      importerPath: `${root}/src/App.tsx`,
+      importerVersion: 1,
+      aliases: {},
+      host: createMemoryHost(files),
+      cache,
+    };
+
+    expect(await resolveAsset(opts)).toBeUndefined();
+    expect(cache.resolutions.size).toBe(0);
+
+    files[`${root}/src/assets/icon.svg`] = '<svg/>';
+    const hit = await resolveAsset({
+      ...opts,
+      host: createMemoryHost(files),
+      cache,
+    });
+    expect(hit?.physicalUri).toBe(`${root}/src/assets/icon.svg`);
   });
 });

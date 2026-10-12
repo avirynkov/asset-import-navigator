@@ -26,7 +26,52 @@
         "name": "asset-import-navigator-ts-plugin",
         "enableForWorkspaceTypeScriptVersions": true
       }
-    ]
+    ],
+    "configuration": {
+      "title": "Asset Import Navigator",
+      "properties": {
+        "assetImportNavigator.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable Mode A definition rewrite and Mode B document links / fallback definition for supported asset imports."
+        },
+        "assetImportNavigator.extensions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            ".svg",
+            ".css",
+            ".scss",
+            ".sass",
+            ".less"
+          ],
+          "description": "Asset file extensions eligible for navigation rewrite."
+        },
+        "assetImportNavigator.aliases": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "default": {},
+          "description": "Optional path-prefix aliases (values absolutized against the project directory). Prefer tsconfig paths when possible."
+        },
+        "assetImportNavigator.queryPolicy": {
+          "type": "string",
+          "enum": [
+            "strip-for-supported-extension"
+          ],
+          "default": "strip-for-supported-extension",
+          "description": "How import query strings are handled when resolving physical assets."
+        },
+        "assetImportNavigator.debug": {
+          "type": "boolean",
+          "default": false,
+          "description": "Write mode detection and resolution diagnostics to the Asset Import Navigator OutputChannel (never logs source file contents)."
+        }
+      }
+    }
   },
   "scripts": {
     "compile": "tsc -p .",
@@ -34,6 +79,7 @@
     "watch": "tsc -p . -w",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:integration": "vitest run src/test/integration",
     "probe:tsserver": "node scripts/phase0-tsserver-probe.mjs"
   },
   "dependencies": {

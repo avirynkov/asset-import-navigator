@@ -2,10 +2,23 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as vscode from 'vscode';
 import {
+  isConfigurePluginAvailable,
+  registerPluginConfigurationListener,
+  syncPluginConfiguration,
+} from './configurePluginBridge';
+import {
   PHASE0_HOVER_APPROACH,
   buildPhase0HoverMarkdown,
   type SvgHoverApproach,
 } from './phase0Hover';
+import { CONFIG_SECTION, readExtensionNavConfig } from './configuration';
+import { createDocumentLinkProvider } from './documentLinkProvider';
+import { createDefinitionProviderFallback } from './definitionProviderFallback';
+import { createResolutionCache } from './assetNavigationCore';
+import { createVscodeFileSystem } from '../platform/vscodeFileSystem';
+import { invalidateOnExtensionConfigChange } from '../shared/resolution/resolutionCache';
+import { detectNavigationMode } from './modeDetection';
+import { disposeOutputChannel, getOutputChannel, logModeIfDebug } from './output';
 
 export {
   PHASE0_HOVER_APPROACH,
@@ -15,19 +28,74 @@ export {
 
 const PHASE0_SVG_SPECIFIER = './icon.svg?react';
 
+const DOCUMENT_SELECTOR: vscode.DocumentSelector = [
+  { language: 'typescript', scheme: 'file' },
+  { language: 'typescriptreact', scheme: 'file' },
+];
+
 export function activate(context: vscode.ExtensionContext): void {
-  const provider = vscode.languages.registerHoverProvider(
-    [
-      { language: 'typescript', scheme: 'file' },
-      { language: 'typescriptreact', scheme: 'file' },
-    ],
-    {
-      provideHover(document, position) {
-        return providePhase0SvgHover(document, position, PHASE0_HOVER_APPROACH);
-      },
+  const host = createVscodeFileSystem();
+  const cache = createResolutionCache();
+
+  const hoverProvider = vscode.languages.registerHoverProvider(DOCUMENT_SELECTOR, {
+    provideHover(document, position) {
+      return providePhase0SvgHover(document, position, PHASE0_HOVER_APPROACH);
     },
+  });
+  context.subscriptions.push(hoverProvider);
+
+  context.subscriptions.push(
+    vscode.languages.registerDocumentLinkProvider(
+      DOCUMENT_SELECTOR,
+      createDocumentLinkProvider(host, cache),
+    ),
   );
-  context.subscriptions.push(provider);
+  context.subscriptions.push(
+    vscode.languages.registerDefinitionProvider(
+      DOCUMENT_SELECTOR,
+      createDefinitionProviderFallback(host, cache),
+    ),
+  );
+
+  context.subscriptions.push(getOutputChannel());
+  context.subscriptions.push({ dispose: () => disposeOutputChannel() });
+
+  registerPluginConfigurationListener(context);
+  void syncPluginConfiguration().then(() => reportMode());
+
+  context.subscriptions.push(
+    vscode.workspace.onDidChangeConfiguration((event) => {
+      if (event.affectsConfiguration(CONFIG_SECTION)) {
+        invalidateOnExtensionConfigChange(cache);
+        void reportMode();
+      }
+      if (event.affectsConfiguration('js/ts.experimental.useTsgo')) {
+        void reportMode();
+      }
+    }),
+  );
+}
+
+/** Phase 0 COMPAT-03 probe key (`js/ts.experimental.useTsgo`). */
+function readUseTsgoSetting(): boolean {
+  return Boolean(
+    vscode.workspace
+      .getConfiguration()
+      .get<boolean>('js/ts.experimental.useTsgo'),
+  );
+}
+
+async function reportMode(): Promise<void> {
+  // Use first workspace folder (or cwd) for debug flag; mode report is workspace-global.
+  const base =
+    vscode.workspace.workspaceFolders?.[0]?.uri.fsPath ?? process.cwd();
+  const config = readExtensionNavConfig(base);
+  const configurePluginAvailable = await isConfigurePluginAvailable();
+  const report = detectNavigationMode({
+    useTsgo: readUseTsgoSetting(),
+    configurePluginAvailable,
+  });
+  logModeIfDebug(config.debug, report);
 }
 
 export function deactivate(): void {

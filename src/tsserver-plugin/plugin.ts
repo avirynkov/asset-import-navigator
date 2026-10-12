@@ -1,42 +1,86 @@
 import type * as ts from 'typescript/lib/tsserverlibrary';
-import { trySpikeAssetDefinition } from './definitionSpike';
+import {
+  DEFAULT_PLUGIN_NAV_CONFIG,
+  normalizePluginConfig,
+  type PluginNavConfig,
+} from './configuration';
+import {
+  createInterceptorCache,
+  tryRewriteAssetDefinition,
+  type DefinitionInterceptorContext,
+} from './definitionInterceptor';
+import {
+  createLanguageServiceProxy,
+  DEFINITION_OVERRIDE_METHODS,
+} from './languageServiceProxy';
+import { createServerHostAdapter } from './serverHostAdapter';
+import { invalidateOnExtensionConfigChange } from '../shared/resolution/resolutionCache';
 
-/** Set false to measure baseline ambient navigation without rewrite. */
-export const SPIKE_REWRITE_ENABLED = true;
+/** Last configurePlugin / onConfigurationChanged payload (module-level). */
+let latestConfigPayload: unknown = undefined;
 
-const DEFINITION_METHODS = [
-  'getDefinitionAndBoundSpan',
-  'getDefinitionAtPosition',
-  'getTypeDefinitionAtPosition',
-] as const;
+/** Active interceptor caches so config changes can invalidate them. */
+const activeCaches = new Set<ReturnType<typeof createInterceptorCache>>();
 
-let typescriptModule: typeof ts | undefined;
-
-export function attachTypeScript(typescript: typeof ts): void {
-  typescriptModule = typescript;
+export function attachTypeScript(_typescript: typeof ts): void {
+  // Reserved for future ScriptElementKind / version-specific helpers.
 }
+
+export function onConfigurationChanged(config: unknown): void {
+  latestConfigPayload = config;
+  for (const cache of activeCaches) {
+    invalidateOnExtensionConfigChange(cache);
+  }
+}
+
+export function getLatestConfigPayload(): unknown {
+  return latestConfigPayload;
+}
+
+/** Exposed for tests / AC-3.6. */
+export { DEFINITION_OVERRIDE_METHODS };
 
 export function createPlugin(info: ts.server.PluginCreateInfo): ts.LanguageService {
   const ls = info.languageService;
   const logger = info.project.projectService.logger;
+  const host = createServerHostAdapter(info);
+  const cache = createInterceptorCache();
+  activeCaches.add(cache);
+
+  const baseDir = info.project.getCurrentDirectory();
+
+  const getConfig = (): PluginNavConfig => {
+    if (latestConfigPayload === undefined) {
+      // Zero-config defaults until configurePlugin runs
+      return {
+        ...DEFAULT_PLUGIN_NAV_CONFIG,
+        aliases: normalizePluginConfig({}, baseDir).aliases,
+      };
+    }
+    return normalizePluginConfig(latestConfigPayload, baseDir);
+  };
 
   logger.info('[asset-import-navigator-ts-plugin] create() — plugin loaded');
 
-  const proxy: ts.LanguageService = Object.create(null);
+  const proxy = createLanguageServiceProxy(ls);
 
-  for (const key of Object.keys(ls) as Array<keyof ts.LanguageService>) {
-    const value = ls[key];
-    if (typeof value === 'function') {
-      // @ts-expect-error - LanguageService method forwarding
-      proxy[key] = (...args: unknown[]) =>
-        (value as (...a: unknown[]) => unknown).apply(ls, args);
-    } else {
-      // @ts-expect-error - LanguageService property forwarding
-      proxy[key] = value;
-    }
-  }
+  const ctx: DefinitionInterceptorContext = {
+    getConfig,
+    host,
+    cache,
+    getScriptVersion: (fileName: string) => {
+      try {
+        return info.languageServiceHost.getScriptVersion(fileName);
+      } catch {
+        return '0';
+      }
+    },
+    logger,
+  };
 
-  const wrapDefinitionMethod = (methodName: (typeof DEFINITION_METHODS)[number]): void => {
+  const wrapDefinitionMethod = (
+    methodName: (typeof DEFINITION_OVERRIDE_METHODS)[number],
+  ): void => {
     const original = ls[methodName];
     if (typeof original !== 'function') {
       return;
@@ -48,27 +92,25 @@ export function createPlugin(info: ts.server.PluginCreateInfo): ts.LanguageServi
         `[asset-import-navigator-ts-plugin] ${methodName} file=${fileName} pos=${position}`,
       );
 
-      if (SPIKE_REWRITE_ENABLED && typescriptModule) {
+      try {
         const program = ls.getProgram();
-        const spike = trySpikeAssetDefinition(
-          typescriptModule,
-          program,
-          fileName,
-          position,
-        );
-        if (spike) {
-          logger.info(
-            `[asset-import-navigator-ts-plugin] rewrite → ${spike.definitions[0]?.fileName}`,
-          );
+        const rewrite = tryRewriteAssetDefinition(program, fileName, position, ctx);
+        if (rewrite) {
           if (methodName === 'getDefinitionAndBoundSpan') {
             const result: ts.DefinitionInfoAndBoundSpan = {
-              definitions: spike.definitions,
-              textSpan: spike.textSpan,
+              definitions: rewrite.definitions,
+              textSpan: rewrite.textSpan,
             };
             return result;
           }
-          return spike.definitions;
+          return rewrite.definitions;
         }
+      } catch (err) {
+        logger.info(
+          `[asset-import-navigator-ts-plugin] rewrite error — delegating: ${
+            err instanceof Error ? err.message : String(err)
+          }`,
+        );
       }
 
       // @ts-expect-error - forward to original LS method
@@ -76,7 +118,7 @@ export function createPlugin(info: ts.server.PluginCreateInfo): ts.LanguageServi
     };
   };
 
-  for (const method of DEFINITION_METHODS) {
+  for (const method of DEFINITION_OVERRIDE_METHODS) {
     wrapDefinitionMethod(method);
   }
 

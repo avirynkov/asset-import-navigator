@@ -1,6 +1,7 @@
 import ts from 'typescript';
 import type { AssetResolverHost } from '../model/resolvedAsset';
 import { dirname, isRelativeSpecifier, joinPath, normalizePath, walkAncestors } from './pathUtils';
+import { SyncHostAsyncError, unwrapSync } from './syncHost';
 
 export interface TsconfigPathMappings {
   configPath: string;
@@ -23,8 +24,13 @@ async function hostReadText(
   if (!host.readFile) {
     return undefined;
   }
-  const bytes = await host.readFile(uri);
-  return new TextDecoder('utf-8').decode(bytes);
+  try {
+    const bytes = await host.readFile(uri);
+    return new TextDecoder('utf-8').decode(bytes);
+  } catch {
+    // Missing / unreadable file → treat as absent (RES-06 / Mode A must not throw).
+    return undefined;
+  }
 }
 
 function isPackageExtends(spec: string): boolean {
@@ -290,6 +296,193 @@ export async function resolveTsconfigPathsCandidate(
   if (mappings.baseUrl !== undefined) {
     const candidate = normalizePath(joinPath(mappings.baseUrlDir, physicalSpecifier));
     if (await hostFileExists(host, candidate)) {
+      return candidate;
+    }
+  }
+
+  return undefined;
+}
+
+// --- Sync twins (Mode A / resolveAssetSync). Host must return sync values. ---
+
+function hostFileExistsSync(host: AssetResolverHost, uri: string): boolean {
+  return unwrapSync(host.fileExists(uri), 'fileExists');
+}
+
+function hostReadTextSync(host: AssetResolverHost, uri: string): string | undefined {
+  if (!host.readFile) {
+    return undefined;
+  }
+  try {
+    const bytes = unwrapSync(host.readFile(uri), 'readFile');
+    return new TextDecoder('utf-8').decode(bytes);
+  } catch (err) {
+    // SyncHostAsyncError must still propagate for resolveAssetSync miss-as-delegate.
+    if (err instanceof SyncHostAsyncError) {
+      throw err;
+    }
+    // Missing / unreadable file → treat as absent.
+    return undefined;
+  }
+}
+
+function loadConfigJsonSync(
+  host: AssetResolverHost,
+  configPath: string,
+): { json: ParsedConfigJson; text: string } | undefined {
+  const text = hostReadTextSync(host, configPath);
+  if (text === undefined) {
+    return undefined;
+  }
+  const parsed = ts.parseConfigFileTextToJson(configPath, text);
+  if (parsed.error || !parsed.config || typeof parsed.config !== 'object') {
+    return undefined;
+  }
+  return { json: parsed.config as ParsedConfigJson, text };
+}
+
+function mergeConfigOptionsSync(
+  host: AssetResolverHost,
+  configPath: string,
+  seen: Set<string>,
+): {
+  baseUrl: string | undefined;
+  baseUrlDir: string | undefined;
+  paths: Record<string, string[]> | undefined;
+  contentParts: string[];
+} {
+  const normalized = normalizePath(configPath);
+  if (seen.has(normalized)) {
+    return { baseUrl: undefined, baseUrlDir: undefined, paths: undefined, contentParts: [] };
+  }
+  seen.add(normalized);
+
+  const loaded = loadConfigJsonSync(host, normalized);
+  if (!loaded) {
+    return { baseUrl: undefined, baseUrlDir: undefined, paths: undefined, contentParts: [] };
+  }
+
+  const contentParts = [`${normalized}:${loaded.text}`];
+  let baseUrl: string | undefined;
+  let baseUrlDir: string | undefined;
+  let paths: Record<string, string[]> | undefined;
+  const configDir = dirname(normalized);
+
+  const extendsRaw = loaded.json.extends;
+  const extendsList = extendsRaw === undefined
+    ? []
+    : Array.isArray(extendsRaw)
+      ? extendsRaw
+      : [extendsRaw];
+
+  for (const ext of extendsList) {
+    if (typeof ext !== 'string' || isPackageExtends(ext)) {
+      continue;
+    }
+    const parentPath = normalizePath(
+      ext.startsWith('/') || /^[A-Za-z]:[\\/]/.test(ext)
+        ? ext
+        : joinPath(configDir, ext),
+    );
+    let resolvedParent = parentPath;
+    if (!hostFileExistsSync(host, resolvedParent)) {
+      const withJson = parentPath.endsWith('.json') ? parentPath : `${parentPath}.json`;
+      if (hostFileExistsSync(host, withJson)) {
+        resolvedParent = withJson;
+      }
+    }
+    const parent = mergeConfigOptionsSync(host, resolvedParent, seen);
+    contentParts.push(...parent.contentParts);
+    if (parent.baseUrl !== undefined) {
+      baseUrl = parent.baseUrl;
+      baseUrlDir = parent.baseUrlDir;
+    }
+    if (parent.paths !== undefined) {
+      paths = parent.paths;
+    }
+  }
+
+  const opts = loaded.json.compilerOptions;
+  if (opts?.baseUrl !== undefined) {
+    baseUrl = opts.baseUrl;
+    baseUrlDir = normalizePath(joinPath(configDir, opts.baseUrl));
+  }
+  if (opts?.paths !== undefined) {
+    paths = opts.paths;
+  }
+
+  return { baseUrl, baseUrlDir, paths, contentParts };
+}
+
+export function findNearestConfigPathSync(
+  host: AssetResolverHost,
+  importerPath: string,
+): string | undefined {
+  for (const dir of walkAncestors(importerPath)) {
+    const tsconfig = joinPath(dir, 'tsconfig.json');
+    if (hostFileExistsSync(host, tsconfig)) {
+      return tsconfig;
+    }
+    const jsconfig = joinPath(dir, 'jsconfig.json');
+    if (hostFileExistsSync(host, jsconfig)) {
+      return jsconfig;
+    }
+  }
+  return undefined;
+}
+
+export function loadTsconfigPathMappingsSync(
+  host: AssetResolverHost,
+  importerPath: string,
+): TsconfigPathMappings | undefined {
+  if (!host.readFile) {
+    return undefined;
+  }
+
+  const configPath = findNearestConfigPathSync(host, importerPath);
+  if (!configPath) {
+    return undefined;
+  }
+
+  const merged = mergeConfigOptionsSync(host, configPath, new Set());
+  const configDir = dirname(configPath);
+  const baseUrlDir = merged.baseUrlDir ?? configDir;
+  const contentId = simpleHash(merged.contentParts.join('\n'));
+
+  return {
+    configPath,
+    contentId,
+    baseUrl: merged.baseUrl,
+    baseUrlDir,
+    paths: merged.paths,
+  };
+}
+
+export function resolveTsconfigPathsCandidateSync(
+  host: AssetResolverHost,
+  physicalSpecifier: string,
+  mappings: TsconfigPathMappings,
+): string | undefined {
+  if (isRelativeSpecifier(physicalSpecifier)) {
+    return undefined;
+  }
+
+  if (mappings.paths) {
+    const matched = matchPathsPattern(physicalSpecifier, mappings.paths);
+    if (matched) {
+      const targets = mappings.paths[matched.pattern] ?? [];
+      for (const target of targets) {
+        const candidate = expandTarget(target, matched.starCapture, mappings.baseUrlDir);
+        if (hostFileExistsSync(host, candidate)) {
+          return candidate;
+        }
+      }
+    }
+  }
+
+  if (mappings.baseUrl !== undefined) {
+    const candidate = normalizePath(joinPath(mappings.baseUrlDir, physicalSpecifier));
+    if (hostFileExistsSync(host, candidate)) {
       return candidate;
     }
   }
