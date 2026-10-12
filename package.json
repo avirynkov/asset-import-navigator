@@ -1,0 +1,48 @@
+{
+  "name": "asset-import-navigator",
+  "displayName": "Asset Import Navigator",
+  "description": "Navigate imported SVG, CSS, SCSS, and other assets to their real source files instead of ambient declaration dead ends.",
+  "version": "0.0.1",
+  "publisher": "Avi Rynkov",
+  "author": {
+    "name": "Avi Rynkov",
+    "url": "https://avirynkov.dev"
+  },
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onLanguage:typescript",
+    "onLanguage:typescriptreact"
+  ],
+  "main": "./out/extension/extension.js",
+  "contributes": {
+    "typescriptServerPlugins": [
+      {
+        "name": "asset-import-navigator-ts-plugin",
+        "enableForWorkspaceTypeScriptVersions": true
+      }
+    ]
+  },
+  "scripts": {
+    "compile": "tsc -p .",
+    "typecheck": "tsc -p . --noEmit",
+    "watch": "tsc -p . -w",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "probe:tsserver": "node scripts/phase0-tsserver-probe.mjs"
+  },
+  "dependencies": {
+    "asset-import-navigator-ts-plugin": "file:./src/tsserver-plugin"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.10",
+    "@types/vscode": "^1.85.0",
+    "typescript": "^5.8.2",
+    "vitest": "^3.0.9"
+  }
+}

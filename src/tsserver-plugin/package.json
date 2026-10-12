@@ -1,0 +1,8 @@
+{
+  "name": "asset-import-navigator-ts-plugin",
+  "version": "0.0.1",
+  "description": "TypeScript server plugin for Asset Import Navigator (Phase 0 spike)",
+  "main": "../../out/tsserver-plugin/index.js",
+  "license": "MIT",
+  "private": true
+}

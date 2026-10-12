@@ -1,0 +1,10 @@
+.vscode/**
+src/**
+src/test/**
+tsconfig.json
+vitest.config.ts
+**/*.ts
+**/*.map
+node_modules/**/test/**
+docs/asset-import-navigator-implementation-plan.md
+.gitignore
