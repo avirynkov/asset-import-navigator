@@ -1,6 +1,5 @@
 node_modules/
 out/
-docs/
 *.vsix
 .DS_Store
 src/test/fixtures/phase0/node_modules/
