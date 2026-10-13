@@ -33,7 +33,7 @@
 | `capabilities.untrustedWorkspaces` | `supported: "limited"` with `restrictedConfigurations: ["assetImportNavigator.aliases"]` (code review fix): everything works in Restricted Mode except that workspace-level aliases are ignored, so an untrusted repo can't point resolution or hover reads outside itself. Without the declaration VS Code would disable the extension. Behaviour in Restricted Mode is MANUAL-CHECKLIST #13 (not yet observed). |
 | `capabilities.virtualWorkspaces` | `supported: false` with a description: providers handle `file:` only, and the default (`true`) would over-claim. |
 | Version / preview | `0.1.0` with `"preview": true`; CHANGELOG section `[0.1.0] - Unreleased`. |
-| Icon / banner | `images/icon.png`, 256×256 with transparent corners, rendered from `images/icon.svg` (draft; replace it if you prefer your own). `galleryBanner` is dark `#2b2f77`. The SVG source is excluded from the VSIX. |
+| Icon / banner | `images/asset-import-logo.png` (1024×1024). `galleryBanner` is `#0D72F3` (logo blue). SVG/JPG sources are excluded from the VSIX. |
 | Open VSX | `release.yml` job `openvsx`: `ovsx@1.2.0 publish --trusted-publishing` (OIDC, no token), gated by `vars.PUBLISH_TO_OPENVSX == 'true'`. |
 | `qna` | Left at the Marketplace default (Q&A tab). |
 
