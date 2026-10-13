@@ -7,7 +7,7 @@
 **License:** MIT  
 **Extension display name:** `Asset Import Navigator`  
 **Extension id:** `asset-import-navigator`  
-**Publisher:** `PUBLISHER_TODO` (human must set before Marketplace publish)
+**Publisher:** `avirynkov` (Marketplace publisher must be created before the first publish)  
 
 ---
 
@@ -292,7 +292,7 @@ flowchart TB
 | v1 extensions | `.svg`, `.css`, `.scss`, `.sass`, `.less` |
 | Workflow | Sequential Phases 0→7 by default |
 | Contract freeze | After Phase 2 acceptance |
-| Publisher | `PUBLISHER_TODO` until human sets it |
+| Publisher | `avirynkov` |
 
 **Never:**
 
