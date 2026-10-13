@@ -98,6 +98,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:integration": "vitest run src/test/integration",
+    "test:e2e": "npm run compile && vscode-test",
     "probe:tsserver": "node scripts/phase0-tsserver-probe.mjs"
   },
   "dependencies": {
@@ -105,8 +106,12 @@
     "typescript": "^5.8.2"
   },
   "devDependencies": {
+    "@types/mocha": "^10.0.10",
     "@types/node": "^22.13.10",
     "@types/vscode": "^1.85.0",
+    "@vscode/test-cli": "^0.0.15",
+    "@vscode/test-electron": "^3.1.0",
+    "mocha": "^11.8.0",
     "vitest": "^3.0.9"
   }
 }

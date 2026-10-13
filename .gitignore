@@ -6,3 +6,4 @@ src/test/fixtures/phase0/node_modules/
 src/test/fixtures/phase0/.tsserver*.log
 src/test/fixtures/phase0/.phase0-*.json
 *.log
+.vscode-test/
