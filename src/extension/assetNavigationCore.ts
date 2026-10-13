@@ -1,4 +1,4 @@
-import ts from 'typescript';
+import type ts from 'typescript';
 import { findAssetReferenceAt } from '../shared/parser/assetReferenceDetector';
 import type { AssetReference } from '../shared/model/assetReference';
 import type {
@@ -12,6 +12,7 @@ import {
 } from '../shared/resolution/resolver';
 import { normalizePath } from '../shared/resolution/pathUtils';
 import { isExtensionAllowed } from '../tsserver-plugin/configuration';
+import { getTypeScript } from '../shared/typescriptRuntime';
 
 export interface AssetNavTarget {
   /** Inclusive start offset in source text (module specifier range). */
@@ -53,6 +54,7 @@ export async function collectAssetDocumentLinks(
     return [];
   }
 
+  const ts = getTypeScript();
   const sourceFile = ts.createSourceFile(
     opts.fileName,
     opts.text,
@@ -121,6 +123,7 @@ export async function resolveAssetDefinitionAt(
     return undefined;
   }
 
+  const ts = getTypeScript();
   const sourceFile = ts.createSourceFile(
     opts.fileName,
     opts.text,
@@ -167,6 +170,7 @@ export async function resolveAssetHoverAt(
     return undefined;
   }
 
+  const ts = getTypeScript();
   const sourceFile = ts.createSourceFile(
     opts.fileName,
     opts.text,
@@ -227,6 +231,7 @@ function touchingRange(
 }
 
 export function scriptKindForLanguageId(languageId: string): ts.ScriptKind {
+  const ts = getTypeScript();
   if (languageId === 'typescriptreact' || languageId === 'javascriptreact') {
     return ts.ScriptKind.TSX;
   }

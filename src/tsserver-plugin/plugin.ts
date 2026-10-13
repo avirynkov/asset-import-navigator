@@ -15,6 +15,7 @@ import {
 } from './languageServiceProxy';
 import { createServerHostAdapter } from './serverHostAdapter';
 import { invalidateOnExtensionConfigChange } from '../shared/resolution/resolutionCache';
+import { setTypeScript } from '../shared/typescriptRuntime';
 
 /** Last configurePlugin / onConfigurationChanged payload (module-level). */
 let latestConfigPayload: unknown = undefined;
@@ -22,8 +23,9 @@ let latestConfigPayload: unknown = undefined;
 /** Active interceptor caches so config changes can invalidate them. */
 const activeCaches = new Set<ReturnType<typeof createInterceptorCache>>();
 
-export function attachTypeScript(_typescript: typeof ts): void {
-  // Reserved for future ScriptElementKind / version-specific helpers.
+export function attachTypeScript(typescript: typeof ts): void {
+  // Parse tsserver's own SourceFiles with tsserver's TypeScript build.
+  setTypeScript(typescript);
 }
 
 export function onConfigurationChanged(config: unknown): void {
