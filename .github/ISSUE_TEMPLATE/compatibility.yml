@@ -1,0 +1,66 @@
+name: Compatibility problem
+description: Works in one environment but not another (TS version, tsgo, remote, other extensions, OS)
+labels: [compatibility, triage]
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: What does not work, and where does it work?
+    validations:
+      required: true
+  - type: input
+    id: vscode
+    attributes:
+      label: VS Code version
+      description: From Help → About (e.g. 1.141.0). Mention Cursor/VSCodium etc. if applicable.
+    validations:
+      required: true
+  - type: input
+    id: extension
+    attributes:
+      label: Asset Import Navigator version
+    validations:
+      required: true
+  - type: dropdown
+    id: ts-mode
+    attributes:
+      label: TypeScript mode
+      options:
+        - Bundled VS Code TypeScript
+        - Workspace TypeScript (typescript.tsdk)
+        - Native TypeScript / tsgo (js/ts.experimental.useTsgo)
+        - Not sure
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options: [macOS, Windows, Linux]
+    validations:
+      required: true
+  - type: dropdown
+    id: remote
+    attributes:
+      label: Remote
+      options: [None (local), Remote SSH, WSL, Dev Container, Codespaces]
+    validations:
+      required: true
+  - type: input
+    id: ts-version
+    attributes:
+      label: TypeScript version
+      description: Shown in the status bar when a TS file is open (click the `{}` / version item).
+  - type: textarea
+    id: extensions
+    attributes:
+      label: Other relevant extensions
+      description: E.g. CSS Modules, Vue/Svelte, other navigation or TypeScript plugins.
+  - type: textarea
+    id: debug
+    attributes:
+      label: Debug output
+      description: 'Asset Import Navigator output channel with `"assetImportNavigator.debug": true`.'
+      render: text
+    validations:
+      required: true
