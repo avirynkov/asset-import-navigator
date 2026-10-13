@@ -1,59 +1,51 @@
-import * as fs from 'node:fs';
-import * as path from 'node:path';
 import * as vscode from 'vscode';
 import {
   isConfigurePluginAvailable,
   registerPluginConfigurationListener,
   syncPluginConfiguration,
 } from './configurePluginBridge';
-import {
-  PHASE0_HOVER_APPROACH,
-  buildPhase0HoverMarkdown,
-  type SvgHoverApproach,
-} from './phase0Hover';
 import { CONFIG_SECTION, readExtensionNavConfig } from './configuration';
 import { createDocumentLinkProvider } from './documentLinkProvider';
 import { createDefinitionProviderFallback } from './definitionProviderFallback';
+import { createHoverProvider } from './hoverProvider';
 import { createResolutionCache } from './assetNavigationCore';
 import { createVscodeFileSystem } from '../platform/vscodeFileSystem';
 import { invalidateOnExtensionConfigChange } from '../shared/resolution/resolutionCache';
 import { detectNavigationMode } from './modeDetection';
 import { disposeOutputChannel, getOutputChannel, logModeIfDebug } from './output';
 
-export {
-  PHASE0_HOVER_APPROACH,
-  buildPhase0HoverMarkdown,
-  type SvgHoverApproach,
-} from './phase0Hover';
+/** Hover: TS/TSX/JS/JSX (C.7). */
+const HOVER_SELECTOR: vscode.DocumentSelector = [
+  { language: 'typescript', scheme: 'file' },
+  { language: 'typescriptreact', scheme: 'file' },
+  { language: 'javascript', scheme: 'file' },
+  { language: 'javascriptreact', scheme: 'file' },
+];
 
-const PHASE0_SVG_SPECIFIER = './icon.svg?react';
-
-const DOCUMENT_SELECTOR: vscode.DocumentSelector = [
+/** Document links + fallback definition remain TS/TSX-only (Phase 4 scope). */
+const NAV_SELECTOR: vscode.DocumentSelector = [
   { language: 'typescript', scheme: 'file' },
   { language: 'typescriptreact', scheme: 'file' },
 ];
 
 export function activate(context: vscode.ExtensionContext): void {
   const host = createVscodeFileSystem();
-  const cache = createResolutionCache();
-
-  const hoverProvider = vscode.languages.registerHoverProvider(DOCUMENT_SELECTOR, {
-    provideHover(document, position) {
-      return providePhase0SvgHover(document, position, PHASE0_HOVER_APPROACH);
-    },
-  });
-  context.subscriptions.push(hoverProvider);
+  const resolutionCache = createResolutionCache();
+  const hoverProvider = createHoverProvider(host, resolutionCache);
 
   context.subscriptions.push(
+    vscode.languages.registerHoverProvider(HOVER_SELECTOR, hoverProvider),
+  );
+  context.subscriptions.push(
     vscode.languages.registerDocumentLinkProvider(
-      DOCUMENT_SELECTOR,
-      createDocumentLinkProvider(host, cache),
+      NAV_SELECTOR,
+      createDocumentLinkProvider(host, resolutionCache),
     ),
   );
   context.subscriptions.push(
     vscode.languages.registerDefinitionProvider(
-      DOCUMENT_SELECTOR,
-      createDefinitionProviderFallback(host, cache),
+      NAV_SELECTOR,
+      createDefinitionProviderFallback(host, resolutionCache),
     ),
   );
 
@@ -66,7 +58,8 @@ export function activate(context: vscode.ExtensionContext): void {
   context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration((event) => {
       if (event.affectsConfiguration(CONFIG_SECTION)) {
-        invalidateOnExtensionConfigChange(cache);
+        invalidateOnExtensionConfigChange(resolutionCache);
+        hoverProvider.clearPreviewCache();
         void reportMode();
       }
       if (event.affectsConfiguration('js/ts.experimental.useTsgo')) {
@@ -86,7 +79,6 @@ function readUseTsgoSetting(): boolean {
 }
 
 async function reportMode(): Promise<void> {
-  // Use first workspace folder (or cwd) for debug flag; mode report is workspace-global.
   const base =
     vscode.workspace.workspaceFolders?.[0]?.uri.fsPath ?? process.cwd();
   const config = readExtensionNavConfig(base);
@@ -100,53 +92,4 @@ async function reportMode(): Promise<void> {
 
 export function deactivate(): void {
   // no-op
-}
-
-export function providePhase0SvgHover(
-  document: vscode.TextDocument,
-  position: vscode.Position,
-  approach: SvgHoverApproach = PHASE0_HOVER_APPROACH,
-): vscode.Hover | undefined {
-  const line = document.lineAt(position.line).text;
-  if (!line.includes(PHASE0_SVG_SPECIFIER)) {
-    return undefined;
-  }
-
-  const importMatch = line.match(
-    /import\s+(\w+)\s+from\s+(['"])(\.\/icon\.svg\?react)\2/,
-  );
-  if (!importMatch) {
-    return undefined;
-  }
-
-  const localName = importMatch[1];
-  const specifier = importMatch[3];
-  const nameIndex = line.indexOf(localName);
-  const specIndex = line.indexOf(specifier);
-  const offset = position.character;
-  const onName =
-    nameIndex >= 0 && offset >= nameIndex && offset <= nameIndex + localName.length;
-  const onSpec =
-    specIndex >= 0 && offset >= specIndex && offset <= specIndex + specifier.length;
-  if (!onName && !onSpec) {
-    return undefined;
-  }
-
-  const svgPath = path.join(path.dirname(document.uri.fsPath), 'icon.svg');
-  if (!fs.existsSync(svgPath)) {
-    return undefined;
-  }
-
-  const svgContents = fs.readFileSync(svgPath, 'utf8');
-  // Reject scripted SVG for hover preview (fail closed to metadata)
-  const effectiveApproach: SvgHoverApproach = /<script[\s>]/i.test(svgContents)
-    ? 'metadata-only'
-    : approach;
-
-  const relativePath = vscode.workspace.asRelativePath(svgPath, false);
-  const md = new vscode.MarkdownString(
-    buildPhase0HoverMarkdown(svgPath, relativePath, effectiveApproach, svgContents),
-  );
-  md.isTrusted = false;
-  return new vscode.Hover(md);
 }

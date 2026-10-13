@@ -17,7 +17,9 @@
   ],
   "activationEvents": [
     "onLanguage:typescript",
-    "onLanguage:typescriptreact"
+    "onLanguage:typescriptreact",
+    "onLanguage:javascript",
+    "onLanguage:javascriptreact"
   ],
   "main": "./out/extension/extension.js",
   "contributes": {
@@ -69,6 +71,22 @@
           "type": "boolean",
           "default": false,
           "description": "Write mode detection and resolution diagnostics to the Asset Import Navigator OutputChannel (never logs source file contents)."
+        },
+        "assetImportNavigator.hover.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show physical-asset hover content for supported asset imports."
+        },
+        "assetImportNavigator.hover.svgPreview": {
+          "type": "boolean",
+          "default": true,
+          "description": "Embed a sanitized local SVG thumbnail in hover when safe (markdown-image data URI)."
+        },
+        "assetImportNavigator.hover.maxPreviewBytes": {
+          "type": "number",
+          "default": 524288,
+          "minimum": 1,
+          "description": "Maximum SVG file size in bytes for hover preview. Larger files fall back to metadata-only."
         }
       }
     }
