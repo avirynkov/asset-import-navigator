@@ -1,4 +1,3 @@
-import type ts from 'typescript';
 import type { AssetResolverHost } from '../model/resolvedAsset';
 import { dirname, isRelativeSpecifier, joinPath, normalizePath, walkAncestors } from './pathUtils';
 import { SyncHostAsyncError, unwrapSync } from './syncHost';

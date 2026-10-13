@@ -7,7 +7,7 @@ export function normalizePath(p: string): string {
   if (!p) {
     return '';
   }
-  let s = p.replace(/\\/g, '/');
+  const s = p.replace(/\\/g, '/');
   const isAbsolute = s.startsWith('/') || /^[A-Za-z]:\//.test(s);
   const parts = s.split('/');
   const out: string[] = [];
