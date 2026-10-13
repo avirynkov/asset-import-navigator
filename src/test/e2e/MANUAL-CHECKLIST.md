@@ -21,3 +21,4 @@ profile (`code --profile clean --install-extension asset-import-navigator-*.vsix
 | 10 | Workspace TypeScript (`typescript.tsdk` → `node_modules/typescript/lib`, "Use Workspace Version") | Same as #1–#2 | COMPAT-02 |
 | 11 | Remote SSH / WSL / Codespaces (if available) | Same as #1, #5 | COMPAT-06 |
 | 12 | Delete `logo.svg` while `App.tsx` is open, then hover or Ctrl+Click `./logo.svg` | No link and no definition to the missing file | RES-06, PERF-02 |
+| 13 | Open the fixture as an **untrusted** folder (Restricted Mode), then F12 / hover / Cmd+Click the path on `Icon` | Same as #1, #5 and the document link (the extension declares Restricted Mode support) | capabilities |

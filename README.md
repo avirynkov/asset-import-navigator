@@ -139,12 +139,17 @@ In Mode A, the plugin rewrites the definition result *before* VS Code sees it. I
 
 **Tested:**
 - VS Code 1.141 with bundled TypeScript 6.0.3 (automated E2E)
+- VS Code 1.85 with bundled TypeScript 5.3, the minimum supported version (same E2E suite, run once before release)
 - workspace TypeScript 5.9 (tsserver probe)
 - single- and multi-root workspaces
 - nested `tsconfig` with `extends`
 - macOS locally; the automated test suite also runs on Windows and Linux in CI
 
 Remote SSH, WSL and Codespaces have **not been tested** for this version.
+
+**Workspace Trust:** the extension runs in Restricted Mode because it never executes project code; it only parses `tsconfig`/`jsconfig` as JSON and checks whether files exist. **Virtual workspaces** (e.g. github.dev) are not supported, because resolution needs a real file system.
+
+**Cursor, VSCodium and other VS Code–based editors** install extensions from [Open VSX](https://open-vsx.org); the extension is published there as well.
 
 ## Known limitations
 

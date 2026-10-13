@@ -18,3 +18,4 @@ eslint.config.mjs
 out/test/**
 **/*.log
 dist/**
+images/icon.svg

@@ -25,6 +25,18 @@
 - The VSIX is 3.74 MB (mostly `typescript`), under the 10 MB threshold, so no slimming was applied.
 - `vsce package --out dist/` requires the directory to exist. The workflows create it; this was found in the local dry run.
 
+## Pre-publish hardening (2026-10-13)
+
+| Item | Result |
+|---|---|
+| Minimum VS Code `^1.85.0` | **Verified**: the `vite-svg-react` E2E suite passes 8/8 on VS Code **1.85.0** (bundled TS 5.3). This was a one-off run: VS Code 1.85's Node 18 extension host can't load mocha 12 (ESM), so it ran with an isolated mocha 11. It is not in CI. |
+| `capabilities.untrustedWorkspaces` | `supported: true`. Without it, VS Code disables the extension in Restricted Mode. No project code is executed. Behaviour in Restricted Mode is MANUAL-CHECKLIST #13 (not yet observed). |
+| `capabilities.virtualWorkspaces` | `supported: false` with a description: providers handle `file:` only, and the default (`true`) would over-claim. |
+| Version / preview | `0.1.0` with `"preview": true`; CHANGELOG section `[0.1.0] - Unreleased`. |
+| Icon / banner | `images/icon.png`, 256×256 with transparent corners, rendered from `images/icon.svg` (draft; replace it if you prefer your own). `galleryBanner` is dark `#2b2f77`. The SVG source is excluded from the VSIX. |
+| Open VSX | `release.yml` job `openvsx`: `ovsx@1.2.0 publish --trusted-publishing` (OIDC, no token), gated by `vars.PUBLISH_TO_OPENVSX == 'true'`. |
+| `qna` | Left at the Marketplace default (Q&A tab). |
+
 ## Deviations from the approved plan
 
 - **Action versions:** the plan said `@v4`; current majors were looked up on 2026-10-13 and used instead (checkout@v7, setup-node@v7, upload-artifact@v7, download-artifact@v8, codeql-action@v4, release-drafter@v7, azure/login@v3).
@@ -37,9 +49,10 @@
 2. Enable **Settings → Advanced Security → Private vulnerability reporting** (SECURITY.md links to it).
 3. Create the labels in `.github/labels.md`.
 4. Create the Marketplace publisher `avirynkov`. For automated publishing, configure Azure workload identity federation, set the repo variables `AZURE_CLIENT_ID`, `AZURE_TENANT_ID` and `PUBLISH_TO_MARKETPLACE=true`, and optionally add protection rules to the `marketplace` environment.
-5. Run MANUAL-CHECKLIST #1–#12 on the packaged VSIX in a clean profile, and record the C.14 Definition of Done walkthrough.
-6. Optionally record a demo GIF for the README (no proprietary code).
-7. Bump the version, move the CHANGELOG `[Unreleased]` notes under it, and tag `vX.Y.Z`.
+5. Run MANUAL-CHECKLIST #1–#13 on the packaged VSIX in a clean profile, and record the C.14 Definition of Done walkthrough.
+6. **Open VSX** (for Cursor/VSCodium users): sign in at open-vsx.org with GitHub, sign the publisher agreement, create the `avirynkov` namespace, register this repository's `release.yml` as a trusted publisher, then set the repository variable `PUBLISH_TO_OPENVSX=true`.
+7. Optionally record a demo GIF for the README (no proprietary code).
+8. Replace "Unreleased" in the CHANGELOG `[0.1.0]` heading with the date and tag `v0.1.0` (the tag must match `package.json`).
 
 ## Verification
 

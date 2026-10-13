@@ -2,7 +2,8 @@
   "name": "asset-import-navigator",
   "displayName": "Asset Import Navigator",
   "description": "Navigate imported SVG, CSS, SCSS, CSS Modules, and other assets to their real source files, with useful hover previews instead of declaration-file dead ends.",
-  "version": "0.0.1",
+  "version": "0.1.0",
+  "preview": true,
   "publisher": "avirynkov",
   "author": {
     "name": "Avi Rynkov",
@@ -17,8 +18,22 @@
     "url": "https://github.com/avirynkov/asset-import-navigator/issues"
   },
   "homepage": "https://github.com/avirynkov/asset-import-navigator#readme",
+  "icon": "images/icon.png",
+  "galleryBanner": {
+    "color": "#2b2f77",
+    "theme": "dark"
+  },
   "engines": {
     "vscode": "^1.85.0"
+  },
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": true
+    },
+    "virtualWorkspaces": {
+      "supported": false,
+      "description": "Asset navigation resolves files on the local or remote file system (file: scheme); virtual workspaces such as github.dev are not supported."
+    }
   },
   "categories": [
     "Other"

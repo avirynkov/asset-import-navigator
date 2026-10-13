@@ -3,9 +3,9 @@
 All notable changes to this extension are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project uses [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [0.1.0] - Unreleased
 
-First public release candidate.
+First public preview. (Replace "Unreleased" with the release date when tagging `v0.1.0`.)
 
 ### Added
 
@@ -15,6 +15,8 @@ First public release candidate.
 - Resolution through relative paths, `tsconfig.json` / `jsconfig.json` `paths` (with `extends` and wildcards), and the `assetImportNavigator.aliases` setting. Vite queries (`?react`, `?url`, `?raw`, …) and hashes are stripped.
 - Supported assets: `.svg`, `.css`, `.scss`, `.sass`, `.less`, including `*.module.*`.
 - Settings: `enabled`, `extensions`, `aliases`, `queryPolicy`, `hover.enabled`, `hover.svgPreview`, `hover.maxPreviewBytes`, `debug`.
+- Works in Restricted Mode (untrusted workspaces). Virtual workspaces are not supported.
+- Supports VS Code 1.85 and later.
 
 ### Known limitations
 
