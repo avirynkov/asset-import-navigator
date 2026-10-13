@@ -1,19 +1,39 @@
 {
   "name": "asset-import-navigator",
   "displayName": "Asset Import Navigator",
-  "description": "Navigate imported SVG, CSS, SCSS, and other assets to their real source files instead of ambient declaration dead ends.",
+  "description": "Navigate imported SVG, CSS, SCSS, CSS Modules, and other assets to their real source files, with useful hover previews instead of declaration-file dead ends.",
   "version": "0.0.1",
-  "publisher": "Avi Rynkov",
+  "publisher": "avirynkov",
   "author": {
     "name": "Avi Rynkov",
     "url": "https://avirynkov.dev"
   },
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/avirynkov/asset-import-navigator.git"
+  },
+  "bugs": {
+    "url": "https://github.com/avirynkov/asset-import-navigator/issues"
+  },
+  "homepage": "https://github.com/avirynkov/asset-import-navigator#readme",
   "engines": {
     "vscode": "^1.85.0"
   },
   "categories": [
     "Other"
+  ],
+  "keywords": [
+    "vite",
+    "svg",
+    "css modules",
+    "scss",
+    "go to definition",
+    "assets",
+    "import",
+    "react",
+    "typescript",
+    "client.d.ts"
   ],
   "activationEvents": [
     "onLanguage:typescript",
@@ -92,6 +112,7 @@
     }
   },
   "scripts": {
+    "vscode:prepublish": "npm run compile",
     "compile": "tsc -p .",
     "lint": "eslint .",
     "typecheck": "tsc -p . --noEmit",
@@ -100,7 +121,8 @@
     "test:watch": "vitest",
     "test:integration": "vitest run src/test/integration",
     "test:e2e": "npm run compile && vscode-test",
-    "probe:tsserver": "node scripts/phase0-tsserver-probe.mjs"
+    "probe:tsserver": "node scripts/phase0-tsserver-probe.mjs",
+    "package": "vsce package"
   },
   "dependencies": {
     "asset-import-navigator-ts-plugin": "file:./src/tsserver-plugin",
@@ -113,6 +135,7 @@
     "@types/vscode": "^1.85.0",
     "@vscode/test-cli": "^0.0.15",
     "@vscode/test-electron": "^3.1.0",
+    "@vscode/vsce": "^4.0.0",
     "eslint": "^10.12.0",
     "globals": "^17.13.0",
     "mocha": "^11.8.0",
