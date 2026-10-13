@@ -7,6 +7,8 @@ import {
   aliasesFingerprint,
   createResolutionCache,
   resolutionCacheKey,
+  storeResolution,
+  touchResolution,
   type ResolutionCache,
 } from './resolutionCache';
 import { unwrapSync } from './syncHost';
@@ -25,6 +27,11 @@ export interface ResolveAssetOptions {
   aliases: Readonly<Record<string, string>>;
   host: AssetResolverHost;
   cache?: ResolutionCache;
+  /**
+   * Re-check that a cached target still exists (default true). Callers that
+   * stat the target themselves (hover) pass false to avoid a second disk check.
+   */
+  revalidateCachedHit?: boolean;
 }
 
 export { createResolutionCache };
@@ -105,17 +112,8 @@ function cacheResolution(
   if (!cache || resolved === undefined) {
     return;
   }
-  // Key = importer \0 version \0 …: drop the importer's entries for other versions
-  // so the cache stays bounded by importers, not by edits (PERF-02).
-  const [importer, version] = key.split('\0', 2);
-  const importerPrefix = importer + '\0';
-  const currentPrefix = importerPrefix + version + '\0';
-  for (const existing of cache.resolutions.keys()) {
-    if (existing.startsWith(importerPrefix) && !existing.startsWith(currentPrefix)) {
-      cache.resolutions.delete(existing);
-    }
-  }
-  cache.resolutions.set(key, resolved);
+  // Bounded per importer via the version index (PERF-02).
+  storeResolution(cache, key, resolved);
 }
 
 /**
@@ -170,7 +168,8 @@ export async function resolveAsset(
     const hit = opts.cache.resolutions.get(key);
     if (hit) {
       // Re-validate: the asset may have been deleted/renamed since caching (RES-06).
-      if (await fileExists(host, hit.physicalUri)) {
+      if (opts.revalidateCachedHit === false || (await fileExists(host, hit.physicalUri))) {
+        touchResolution(opts.cache, key);
         return hit;
       }
       opts.cache.resolutions.delete(key);
@@ -269,7 +268,8 @@ function resolveAssetSyncInner(opts: ResolveAssetOptions): ResolvedAsset | undef
     const hit = opts.cache.resolutions.get(key);
     if (hit) {
       // Re-validate: the asset may have been deleted/renamed since caching (RES-06).
-      if (fileExistsSync(host, hit.physicalUri)) {
+      if (opts.revalidateCachedHit === false || fileExistsSync(host, hit.physicalUri)) {
+        touchResolution(opts.cache, key);
         return hit;
       }
       opts.cache.resolutions.delete(key);

@@ -75,11 +75,11 @@ function renderSvgHoverMarkdown(opts: RenderAssetHoverOptions): string {
   }
 
   const lines: string[] = [
-    `**${fileName}**`,
+    `**${escapeMarkdownText(fileName)}**`,
     '',
-    `\`${opts.relativePath}\``,
+    inlineCode(opts.relativePath),
     '',
-    `Specifier: \`${opts.originalSpecifier}\``,
+    `Specifier: ${inlineCode(opts.originalSpecifier)}`,
     '',
     `Size: ${meta.byteLength} bytes`,
   ];
@@ -99,8 +99,10 @@ function renderSvgHoverMarkdown(opts: RenderAssetHoverOptions): string {
   }
 
   if (showPreview && svgForPreview !== undefined) {
-    const encoded = encodeURIComponent(svgForPreview);
-    lines.push('', `![${fileName}](data:image/svg+xml,${encoded})`);
+    lines.push(
+      '',
+      `![${escapeMarkdownText(fileName)}](data:image/svg+xml,${encodeUriStrict(svgForPreview)})`,
+    );
   }
 
   lines.push('', openFileLine(opts.openFileUri), '');
@@ -111,11 +113,11 @@ function renderStylesheetHoverMarkdown(opts: RenderAssetHoverOptions): string {
   const sheet = extractStylesheetMetadata(opts.physicalPath, opts.byteLength);
   const typeLabel = stylesheetTypeLabel(opts.kind, sheet.moduleKind);
   const lines: string[] = [
-    `**${sheet.fileName}**`,
+    `**${escapeMarkdownText(sheet.fileName)}**`,
     '',
-    `\`${opts.relativePath}\``,
+    inlineCode(opts.relativePath),
     '',
-    `Specifier: \`${opts.originalSpecifier}\``,
+    `Specifier: ${inlineCode(opts.originalSpecifier)}`,
     '',
     `Type: ${typeLabel}`,
     '',
@@ -136,5 +138,34 @@ function stylesheetTypeLabel(
 }
 
 function openFileLine(openFileUri: string): string {
-  return `[Open file](${openFileUri})`;
+  return `[Open file](${escapeLinkDestination(openFileUri)})`;
+}
+
+/**
+ * encodeURIComponent leaves `( ) ! ' *` as-is; an unbalanced `)` would end a
+ * Markdown link destination early, so encode those too.
+ */
+function encodeUriStrict(value: string): string {
+  return encodeURIComponent(value).replace(
+    /[()!'*]/g,
+    (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`,
+  );
+}
+
+/** Keep an already-encoded URI intact inside `(...)`. */
+function escapeLinkDestination(uri: string): string {
+  return uri.replace(/[()\s<>]/g, (c) => `%${c.charCodeAt(0).toString(16).toUpperCase().padStart(2, '0')}`);
+}
+
+/** Backslash-escape inline Markdown syntax (emphasis, code, links, HTML) in names. */
+function escapeMarkdownText(value: string): string {
+  return value.replace(/[\\`*_[\]<>]/g, '\\$&');
+}
+
+/** Inline code span that tolerates backticks in `value` (CommonMark fence rule). */
+function inlineCode(value: string): string {
+  const longestRun = Math.max(0, ...(value.match(/`+/g) ?? []).map((r) => r.length));
+  const fence = '`'.repeat(longestRun + 1);
+  const pad = value.startsWith('`') || value.endsWith('`') ? ' ' : '';
+  return `${fence}${pad}${value}${pad}${fence}`;
 }

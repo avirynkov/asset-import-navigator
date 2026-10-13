@@ -87,6 +87,7 @@ export function createHoverProvider(
       const revalidationToken = `${stat.size}:${stat.mtime}`;
       const cacheKey = previewCacheKey({
         physicalUri: physicalPath,
+        originalSpecifier: target.resolved.originalSpecifier,
         revalidationToken,
         maxPreviewBytes: config.hoverMaxPreviewBytes,
         svgPreview: config.hoverSvgPreview,

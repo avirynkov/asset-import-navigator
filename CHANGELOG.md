@@ -15,7 +15,7 @@ First public preview. (Replace "Unreleased" with the release date when tagging `
 - Resolution through relative paths, `tsconfig.json` / `jsconfig.json` `paths` (with `extends` and wildcards), and the `assetImportNavigator.aliases` setting. Vite queries (`?react`, `?url`, `?raw`, …) and hashes are stripped.
 - Supported assets: `.svg`, `.css`, `.scss`, `.sass`, `.less`, including `*.module.*`.
 - Settings: `enabled`, `extensions`, `aliases`, `queryPolicy`, `hover.enabled`, `hover.svgPreview`, `hover.maxPreviewBytes`, `debug`.
-- Works in Restricted Mode (untrusted workspaces). Virtual workspaces are not supported.
+- Works in Restricted Mode (untrusted workspaces); there, workspace-level `assetImportNavigator.aliases` is ignored. Virtual workspaces are not supported.
 - Supports VS Code 1.85 and later.
 
 ### Known limitations

@@ -147,7 +147,7 @@ In Mode A, the plugin rewrites the definition result *before* VS Code sees it. I
 
 Remote SSH, WSL and Codespaces have **not been tested** for this version.
 
-**Workspace Trust:** the extension runs in Restricted Mode because it never executes project code; it only parses `tsconfig`/`jsconfig` as JSON and checks whether files exist. **Virtual workspaces** (e.g. github.dev) are not supported, because resolution needs a real file system.
+**Workspace Trust:** the extension runs in Restricted Mode because it never executes project code; it only parses `tsconfig`/`jsconfig` as JSON and checks whether files exist. In Restricted Mode, a workspace's own `assetImportNavigator.aliases` setting is ignored (your user-level setting still applies), so an untrusted folder can't point resolution or previews outside itself. **Virtual workspaces** (e.g. github.dev) are not supported, because resolution needs a real file system.
 
 **Cursor, VSCodium and other VS Code–based editors** install extensions from [Open VSX](https://open-vsx.org); the extension is published there as well.
 

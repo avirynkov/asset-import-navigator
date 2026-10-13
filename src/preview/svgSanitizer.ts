@@ -76,6 +76,13 @@ function hasExternalDoctype(svgText: string): boolean {
 }
 
 function hasRemoteUrl(svgText: string): boolean {
+  // CSS in <style> or style="": any @import, or url() pointing off-file.
+  if (/@import\b/i.test(svgText)) {
+    return true;
+  }
+  if (hasNonDataCssUrl(svgText)) {
+    return true;
+  }
   // href / xlink:href with http(s) or protocol-relative URLs.
   const hrefRe =
     /(?:xlink:)?href\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/gi;
@@ -83,6 +90,19 @@ function hasRemoteUrl(svgText: string): boolean {
   while ((m = hrefRe.exec(svgText)) !== null) {
     const value = (m[1] ?? m[2] ?? m[3] ?? '').trim();
     if (/^(https?:)?\/\//i.test(value) || /^https?:/i.test(value)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/** True if some CSS url(...) uses a scheme other than data: (or is protocol-relative). */
+function hasNonDataCssUrl(svgText: string): boolean {
+  const urlRe = /url\(\s*['"]?\s*([^'")\s]*)/gi;
+  let m: RegExpExecArray | null;
+  while ((m = urlRe.exec(svgText)) !== null) {
+    const value = m[1] ?? '';
+    if (/^\/\//.test(value) || (/^[a-z][a-z0-9+.-]*:/i.test(value) && !/^data:/i.test(value))) {
       return true;
     }
   }

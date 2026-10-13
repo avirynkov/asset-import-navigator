@@ -48,7 +48,8 @@ function extractRootSvgDimensions(svgText: string): SvgDimensions {
 
 function attrValue(attrs: string, name: string): string | null {
   const re = new RegExp(
-    `\\b${name}\\s*=\\s*(?:"([^"]*)"|'([^']*)'|([^\\s>]+))`,
+    // Attribute boundary: whitespace or start, so `stroke-width` is not `width`.
+    `(?:^|\\s)${name}\\s*=\\s*(?:"([^"]*)"|'([^']*)'|([^\\s>]+))`,
     'i',
   );
   const m = attrs.match(re);

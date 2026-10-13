@@ -1,5 +1,7 @@
 export interface PreviewCacheKeyParts {
   physicalUri: string;
+  /** The import's original specifier: it is rendered into the markdown. */
+  originalSpecifier: string;
   /** Stat size and/or mtime (or content fingerprint) for revalidation. */
   revalidationToken: string;
   maxPreviewBytes: number;
@@ -17,6 +19,7 @@ export interface PreviewCache {
 export function previewCacheKey(parts: PreviewCacheKeyParts): string {
   return [
     parts.physicalUri,
+    parts.originalSpecifier,
     parts.revalidationToken,
     String(parts.maxPreviewBytes),
     parts.svgPreview ? '1' : '0',

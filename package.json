@@ -28,7 +28,11 @@
   },
   "capabilities": {
     "untrustedWorkspaces": {
-      "supported": true
+      "supported": "limited",
+      "description": "In Restricted Mode, workspace values of assetImportNavigator.aliases are ignored so an untrusted folder cannot point resolution or hover previews outside itself. Everything else works; no project code is executed.",
+      "restrictedConfigurations": [
+        "assetImportNavigator.aliases"
+      ]
     },
     "virtualWorkspaces": {
       "supported": false,

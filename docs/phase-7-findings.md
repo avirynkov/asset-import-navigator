@@ -30,7 +30,7 @@
 | Item | Result |
 |---|---|
 | Minimum VS Code `^1.85.0` | **Verified**: the `vite-svg-react` E2E suite passes 8/8 on VS Code **1.85.0** (bundled TS 5.3). This was a one-off run: VS Code 1.85's Node 18 extension host can't load mocha 12 (ESM), so it ran with an isolated mocha 11. It is not in CI. |
-| `capabilities.untrustedWorkspaces` | `supported: true`. Without it, VS Code disables the extension in Restricted Mode. No project code is executed. Behaviour in Restricted Mode is MANUAL-CHECKLIST #13 (not yet observed). |
+| `capabilities.untrustedWorkspaces` | `supported: "limited"` with `restrictedConfigurations: ["assetImportNavigator.aliases"]` (code review fix): everything works in Restricted Mode except that workspace-level aliases are ignored, so an untrusted repo can't point resolution or hover reads outside itself. Without the declaration VS Code would disable the extension. Behaviour in Restricted Mode is MANUAL-CHECKLIST #13 (not yet observed). |
 | `capabilities.virtualWorkspaces` | `supported: false` with a description: providers handle `file:` only, and the default (`true`) would over-claim. |
 | Version / preview | `0.1.0` with `"preview": true`; CHANGELOG section `[0.1.0] - Unreleased`. |
 | Icon / banner | `images/icon.png`, 256×256 with transparent corners, rendered from `images/icon.svg` (draft; replace it if you prefer your own). `galleryBanner` is dark `#2b2f77`. The SVG source is excluded from the VSIX. |

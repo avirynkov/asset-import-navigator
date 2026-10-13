@@ -194,6 +194,8 @@ export async function resolveAssetHoverAt(
     aliases: opts.aliases,
     host: opts.host,
     cache: opts.cache,
+    // The hover provider stats the target itself; skip the duplicate check.
+    revalidateCachedHit: false,
   });
   if (!resolved) {
     return undefined;

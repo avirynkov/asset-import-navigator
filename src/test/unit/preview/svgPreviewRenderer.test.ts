@@ -112,4 +112,40 @@ describe('svgPreviewRenderer markdown-image hover', () => {
     });
     expect(md).toContain('Type: CSS stylesheet');
   });
+
+  it('encodes parentheses so an unbalanced ) cannot end the data URI early', () => {
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="8" height="8"><text>1)</text></svg>`;
+    const md = renderAssetHoverMarkdown({
+      kind: 'svg',
+      physicalPath: '/p/paren.svg',
+      relativePath: 'paren.svg',
+      originalSpecifier: './paren.svg',
+      openFileUri: 'file:///p/paren.svg',
+      byteLength: Buffer.byteLength(svg, 'utf8'),
+      svgText: svg,
+      svgPreview: true,
+      maxPreviewBytes: 524288,
+    })!;
+    const image = md.split('\n').find((l) => l.startsWith('!['))!;
+    const destination = image.slice(image.indexOf('](') + 2, -1);
+    expect(destination).not.toMatch(/[()]/);
+    expect(destination).toContain('%29');
+    expect(image.endsWith(')')).toBe(true);
+  });
+
+  it('escapes Markdown in file names and specifiers', () => {
+    const md = renderAssetHoverMarkdown({
+      kind: 'css',
+      physicalPath: '/p/a](https:x.example)[b.module.css',
+      relativePath: 'a](https:x.example)[b.module.css',
+      originalSpecifier: './we`ird.module.css',
+      openFileUri: 'file:///p/a%5D(https:x.example)%5Bb.module.css',
+      byteLength: 10,
+      svgPreview: false,
+      maxPreviewBytes: 524288,
+    })!;
+    expect(md).toContain('**a\\](https:x.example)\\[b.module.css**');
+    expect(md).toContain('Specifier: ``./we`ird.module.css``');
+    expect(md).toContain('[Open file](file:///p/a%5D%28https:x.example%29%5Bb.module.css)');
+  });
 });

@@ -8,17 +8,31 @@ describe('previewCache', () => {
   it('requires revalidation token in key (not uri-only)', () => {
     const a = previewCacheKey({
       physicalUri: '/a/icon.svg',
+      originalSpecifier: './icon.svg?react',
       revalidationToken: '10:1',
       maxPreviewBytes: 524288,
       svgPreview: true,
     });
     const b = previewCacheKey({
       physicalUri: '/a/icon.svg',
+      originalSpecifier: './icon.svg?react',
       revalidationToken: '10:2',
       maxPreviewBytes: 524288,
       svgPreview: true,
     });
     expect(a).not.toBe(b);
+  });
+
+  it('keys differ per import specifier of the same file (specifier is rendered)', () => {
+    const parts = {
+      physicalUri: '/a/logo.svg',
+      revalidationToken: '10:1',
+      maxPreviewBytes: 524288,
+      svgPreview: true,
+    };
+    expect(previewCacheKey({ ...parts, originalSpecifier: './logo.svg?react' })).not.toBe(
+      previewCacheKey({ ...parts, originalSpecifier: '@/assets/logo.svg?url' }),
+    );
   });
 
   it('get/set/clear and LRU eviction', () => {

@@ -74,4 +74,24 @@ describe('svgSanitizer detect-and-reject', () => {
       reason: 'entity-doctype',
     });
   });
+
+  it('rejects remote CSS url() in style attribute', () => {
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg"><rect style="fill:url(https://evil.example/x#g)"/></svg>`;
+    expect(sanitizeSvgForPreview(svg, 524288)).toEqual({ ok: false, reason: 'remote-url' });
+  });
+
+  it('rejects protocol-relative CSS url()', () => {
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg"><style>rect{fill:url('//evil.example/x')}</style><rect/></svg>`;
+    expect(sanitizeSvgForPreview(svg, 524288)).toEqual({ ok: false, reason: 'remote-url' });
+  });
+
+  it('rejects @import in <style>', () => {
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg"><style>@import "x.css";</style><rect/></svg>`;
+    expect(sanitizeSvgForPreview(svg, 524288)).toEqual({ ok: false, reason: 'remote-url' });
+  });
+
+  it('accepts local url(#id) and data: references', () => {
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="g"/></defs><rect fill="url(#g)" style="mask:url('data:image/png;base64,AA==')"/></svg>`;
+    expect(sanitizeSvgForPreview(svg, 524288).ok).toBe(true);
+  });
 });
