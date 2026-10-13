@@ -105,6 +105,16 @@ function cacheResolution(
   if (!cache || resolved === undefined) {
     return;
   }
+  // Key = importer \0 version \0 …: drop the importer's entries for other versions
+  // so the cache stays bounded by importers, not by edits (PERF-02).
+  const [importer, version] = key.split('\0', 2);
+  const importerPrefix = importer + '\0';
+  const currentPrefix = importerPrefix + version + '\0';
+  for (const existing of cache.resolutions.keys()) {
+    if (existing.startsWith(importerPrefix) && !existing.startsWith(currentPrefix)) {
+      cache.resolutions.delete(existing);
+    }
+  }
   cache.resolutions.set(key, resolved);
 }
 
@@ -157,8 +167,13 @@ export async function resolveAsset(
       aliasesFp,
       configContentId,
     });
-    if (opts.cache.resolutions.has(key)) {
-      return opts.cache.resolutions.get(key);
+    const hit = opts.cache.resolutions.get(key);
+    if (hit) {
+      // Re-validate: the asset may have been deleted/renamed since caching (RES-06).
+      if (await fileExists(host, hit.physicalUri)) {
+        return hit;
+      }
+      opts.cache.resolutions.delete(key);
     }
   }
 
@@ -251,8 +266,13 @@ function resolveAssetSyncInner(opts: ResolveAssetOptions): ResolvedAsset | undef
       aliasesFp,
       configContentId,
     });
-    if (opts.cache.resolutions.has(key)) {
-      return opts.cache.resolutions.get(key);
+    const hit = opts.cache.resolutions.get(key);
+    if (hit) {
+      // Re-validate: the asset may have been deleted/renamed since caching (RES-06).
+      if (fileExistsSync(host, hit.physicalUri)) {
+        return hit;
+      }
+      opts.cache.resolutions.delete(key);
     }
   }
 
