@@ -18,9 +18,9 @@
     "url": "https://github.com/avirynkov/asset-import-navigator/issues"
   },
   "homepage": "https://github.com/avirynkov/asset-import-navigator#readme",
-  "icon": "images/icon.png",
+  "icon": "images/asset-import-logo.png",
   "galleryBanner": {
-    "color": "#2b2f77",
+    "color": "#0D72F3",
     "theme": "dark"
   },
   "engines": {
