@@ -64,7 +64,7 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npx vsce package --out dist/
+      - run: mkdir -p dist && npx vsce package --out dist/
       - run: node scripts/verify-vsix.mjs dist/*.vsix
       - run: node scripts/vsix-install-smoke.mjs dist/*.vsix
       - uses: actions/upload-artifact@v7

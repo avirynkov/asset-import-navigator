@@ -1,6 +1,6 @@
 # Asset Import Navigator — PRD & Implementation Plan
 
-**Status:** Authoritative product + engineering plan — **Phases 0–6 complete**; Phase 7 remaining  
+**Status:** Authoritative product + engineering plan — **Phases 0–7 complete (release candidate)**; operator checks and first GitHub CI run pending — see `docs/phase-7-findings.md`  
 
 **Scope:** TypeScript / TSX / JavaScript / JSX projects; Vite-oriented asset imports as the primary target  
 **Primary goal:** Make frontend asset imports behave like real source-file references in VS Code instead of navigating to ambient declaration files such as `client.d.ts`.  
@@ -1323,7 +1323,7 @@ Manual E2E matrix (C.1) on at least one OS; note others.
 
 ## C.9 Phase 7 — Documentation, examples, ops, release candidate
 
-**Status:** NOT STARTED
+**Status:** DONE (release candidate) — see `docs/phase-7-findings.md` (clean-profile UI walkthrough, NINT-06 and first GitHub CI run operator-pending)
 
 ### Objective
 
@@ -1380,16 +1380,16 @@ Ship a clean installable VSIX with Marketplace-quality docs, required examples, 
 
 ### Acceptance criteria
 
-- [ ] **AC-7.1:** README alone explains problem, supported imports, Mode A/B, config, limits, troubleshooting. → DOC-02
-- [ ] **AC-7.2:** examples/ contains all required projects + matrix. → DOC-03
-- [ ] **AC-7.3:** CI runs lint, typecheck, unit, integration, examples validation, VSIX smoke. → DOC-04
-- [ ] **AC-7.4:** Issue forms for bug, compatibility, feature exist; blank issues disabled.
-- [ ] **AC-7.5:** Release workflow is tag/manual only; not triggered by untrusted PRs.
-- [ ] **AC-7.6:** Fresh VSIX install works on reference Vite fixture.
-- [ ] **AC-7.7:** Motivating `@/…svg?react` and `.module.scss` flows work per documented mode. → NAV-03, NAV-05, HOV-01…HOV-03
+- [x] **AC-7.1:** README alone explains problem, supported imports, Mode A/B, config, limits, troubleshooting. → DOC-02
+- [x] **AC-7.2:** examples/ contains all required projects + matrix. → DOC-03
+- [x] **AC-7.3:** CI runs lint, typecheck, unit, integration, examples validation, VSIX smoke. → DOC-04
+- [x] **AC-7.4:** Issue forms for bug, compatibility, feature exist; blank issues disabled.
+- [x] **AC-7.5:** Release workflow is tag/manual only; not triggered by untrusted PRs.
+- [x] **AC-7.6:** Fresh VSIX install works on reference Vite fixture.
+- [x] **AC-7.7:** Motivating `@/…svg?react` and `.module.scss` flows work per documented mode. → NAV-03, NAV-05, HOV-01…HOV-03
 - [ ] **AC-7.8:** Disabling extension restores baseline. → NINT-06
-- [ ] **AC-7.9:** Display name / extension id correct; publisher still `PUBLISHER_TODO` or human-set. → DOC-01
-- [ ] **AC-7.10:** Package audit excludes secrets, local configs, unnecessary fixtures.
+- [x] **AC-7.9:** Display name / extension id correct; publisher still `PUBLISHER_TODO` or human-set. → DOC-01
+- [x] **AC-7.10:** Package audit excludes secrets, local configs, unnecessary fixtures.
 
 ### Verification
 
@@ -1427,7 +1427,7 @@ Manual: install VSIX in clean profile; run Definition of Done checklist.
 | M4 Mode B fallback | 4 | DONE | AC-4.* | M2 (+ M0 mode facts) |
 | M5 Hover | 5 | DONE | AC-5.* | M2 + M0 hover decision |
 | M6 Hardening | 6 | DONE (AC-6.6/6.8 pending) | AC-6.*; no features | M3 + M4 + M5 |
-| M7 RC | 7 | NOT STARTED | AC-7.*; VSIX clean-room | M6 |
+| M7 RC | 7 | DONE (AC-7.8 + UI walkthrough pending) | AC-7.*; VSIX clean-room | M6 |
 
 ---
 
@@ -1495,7 +1495,8 @@ Default remains sequential. If parallelizing:
 
 ### Compatibility / docs / performance
 
-- [ ] **COMPAT-01…COMPAT-06**, **DOC-01…DOC-04**, **PERF-01…PERF-03:** As in B.14 catalog.
+- [x] **DOC-01…DOC-04**, **PERF-01…PERF-03**, **COMPAT-01/02/03/05:** As in B.14 catalog (evidence: phase-6/7 findings).
+- [ ] **COMPAT-04** (Windows/Linux: pending first CI run), **COMPAT-06** (Remote SSH: documented as untested for v1).
 
 ---
 
