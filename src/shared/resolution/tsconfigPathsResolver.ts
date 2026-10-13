@@ -1,7 +1,7 @@
-import ts from 'typescript';
 import type { AssetResolverHost } from '../model/resolvedAsset';
 import { dirname, isRelativeSpecifier, joinPath, normalizePath, walkAncestors } from './pathUtils';
 import { SyncHostAsyncError, unwrapSync } from './syncHost';
+import { getTypeScript } from '../typescriptRuntime';
 
 export interface TsconfigPathMappings {
   configPath: string;
@@ -59,6 +59,7 @@ async function loadConfigJson(
   if (text === undefined) {
     return undefined;
   }
+  const ts = getTypeScript();
   const parsed = ts.parseConfigFileTextToJson(configPath, text);
   if (parsed.error || !parsed.config || typeof parsed.config !== 'object') {
     return undefined;
@@ -334,6 +335,7 @@ function loadConfigJsonSync(
   if (text === undefined) {
     return undefined;
   }
+  const ts = getTypeScript();
   const parsed = ts.parseConfigFileTextToJson(configPath, text);
   if (parsed.error || !parsed.config || typeof parsed.config !== 'object') {
     return undefined;

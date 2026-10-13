@@ -8,6 +8,9 @@ import { normalizePath } from '../shared/resolution/pathUtils';
 
 const CONFIG_SECTION = 'assetImportNavigator';
 
+/** Default max SVG bytes for hover preview (B.9). */
+export const DEFAULT_HOVER_MAX_PREVIEW_BYTES = 524288;
+
 export interface ExtensionNavConfig {
   enabled: boolean;
   extensions: readonly string[];
@@ -16,6 +19,9 @@ export interface ExtensionNavConfig {
   queryPolicy: QueryPolicy;
   queryPolicySupported: boolean;
   debug: boolean;
+  hoverEnabled: boolean;
+  hoverSvgPreview: boolean;
+  hoverMaxPreviewBytes: number;
 }
 
 /**
@@ -39,6 +45,12 @@ export function readExtensionNavConfig(baseDir: string): ExtensionNavConfig {
     queryPolicy === undefined ||
     queryPolicy === null ||
     queryPolicy === 'strip-for-supported-extension';
+  const hoverEnabled = cfg.get<boolean>('hover.enabled', true);
+  const hoverSvgPreview = cfg.get<boolean>('hover.svgPreview', true);
+  const hoverMaxPreviewBytes = cfg.get<number>(
+    'hover.maxPreviewBytes',
+    DEFAULT_HOVER_MAX_PREVIEW_BYTES,
+  );
 
   return {
     enabled,
@@ -47,6 +59,14 @@ export function readExtensionNavConfig(baseDir: string): ExtensionNavConfig {
     queryPolicy: 'strip-for-supported-extension',
     queryPolicySupported,
     debug,
+    hoverEnabled: hoverEnabled !== false,
+    hoverSvgPreview: hoverSvgPreview !== false,
+    hoverMaxPreviewBytes:
+      typeof hoverMaxPreviewBytes === 'number' &&
+      Number.isFinite(hoverMaxPreviewBytes) &&
+      hoverMaxPreviewBytes > 0
+        ? Math.floor(hoverMaxPreviewBytes)
+        : DEFAULT_HOVER_MAX_PREVIEW_BYTES,
   };
 }
 

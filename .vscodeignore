@@ -8,3 +8,14 @@ vitest.config.ts
 node_modules/**/test/**
 docs/asset-import-navigator-implementation-plan.md
 .gitignore
+docs/**
+examples/**
+.github/**
+scripts/**
+eslint.config.mjs
+.vscode-test.mjs
+.vscode-test/**
+out/test/**
+**/*.log
+dist/**
+images/icon.svg

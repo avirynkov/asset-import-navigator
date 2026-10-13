@@ -1,0 +1,74 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  quality:
+    name: Lint, typecheck, unit/integration, tsserver probe
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test # unit + core integration + compatibility + examples validation
+      - run: npm run compile && npm run probe:tsserver
+
+  e2e:
+    name: VS Code E2E (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: E2E (Linux, virtual display)
+        if: runner.os == 'Linux'
+        run: xvfb-run -a npm run test:e2e
+      - name: E2E
+        if: runner.os != 'Linux'
+        run: npm run test:e2e
+
+  package:
+    name: Package and audit VSIX
+    needs: [quality, e2e]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: mkdir -p dist && npx vsce package --out dist/
+      - run: node scripts/verify-vsix.mjs dist/*.vsix
+      - run: node scripts/vsix-install-smoke.mjs dist/*.vsix
+      - uses: actions/upload-artifact@v7
+        with:
+          name: vsix
+          path: dist/*.vsix
+          if-no-files-found: error

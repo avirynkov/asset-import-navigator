@@ -1,7 +1,8 @@
-import ts from 'typescript';
+import type ts from 'typescript';
 import type { AssetReference } from '../model/assetReference';
 import { classifyAsset } from '../resolution/assetClassifier';
 import { parseModuleSpecifier } from './moduleSpecifier';
+import { getTypeScript } from '../typescriptRuntime';
 
 /**
  * Detect a supported static asset import/export reference at `position`.
@@ -11,6 +12,7 @@ export function findAssetReferenceAt(
   sourceFile: ts.SourceFile,
   position: number,
 ): AssetReference | undefined {
+  const ts = getTypeScript();
   const decl = findImportOrExportAt(sourceFile, position);
   if (!decl) {
     return undefined;
@@ -31,6 +33,7 @@ function findImportOrExportAt(
   sourceFile: ts.SourceFile,
   position: number,
 ): ts.ImportDeclaration | ts.ExportDeclaration | undefined {
+  const ts = getTypeScript();
   let node: ts.Node = sourceFile;
   const visit = (n: ts.Node): void => {
     if (position >= n.getStart(sourceFile) && position < n.getEnd()) {
@@ -55,6 +58,7 @@ function referenceFromImport(
   importDecl: ts.ImportDeclaration,
   position: number,
 ): AssetReference | undefined {
+  const ts = getTypeScript();
   if (importDecl.importClause?.isTypeOnly) {
     return undefined;
   }
@@ -99,6 +103,7 @@ function referenceFromExport(
   exportDecl: ts.ExportDeclaration,
   position: number,
 ): AssetReference | undefined {
+  const ts = getTypeScript();
   if (exportDecl.isTypeOnly) {
     return undefined;
   }
@@ -152,6 +157,7 @@ function referenceFromExport(
 
 /** `export { default as Icon }` — propertyName is `default`, name is `Icon`. */
 function isDefaultAsExportSpecifier(el: ts.ExportSpecifier): boolean {
+  const ts = getTypeScript();
   if (el.isTypeOnly) {
     return false;
   }
@@ -168,6 +174,7 @@ function buildReference(
   moduleSpecifier: ts.Expression,
   symbolRangesFn: () => Array<{ start: number; end: number }>,
 ): AssetReference | undefined {
+  const ts = getTypeScript();
   if (!ts.isStringLiteralLike(moduleSpecifier)) {
     return undefined;
   }

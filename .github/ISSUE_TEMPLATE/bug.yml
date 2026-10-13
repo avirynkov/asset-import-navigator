@@ -1,0 +1,78 @@
+name: Bug report
+description: Navigation, links or hover behave incorrectly
+labels: [bug, triage]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting! If Go to Definition still opens `client.d.ts`, please check the README's troubleshooting section first.
+  - type: textarea
+    id: import
+    attributes:
+      label: Import that misbehaves
+      description: The exact import line(s), e.g. `import Icon from '@/assets/icon.svg?react';`
+      render: ts
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected vs actual
+      description: What did you do (F12, Cmd/Ctrl+Click, hover…), what did you expect, and what happened?
+    validations:
+      required: true
+  - type: textarea
+    id: config
+    attributes:
+      label: Relevant config
+      description: tsconfig/jsconfig `paths`/`baseUrl`, and any `assetImportNavigator.*` settings.
+      render: jsonc
+  - type: input
+    id: vscode
+    attributes:
+      label: VS Code version
+      description: From Help → About (e.g. 1.141.0). Mention Cursor/VSCodium etc. if applicable.
+    validations:
+      required: true
+  - type: input
+    id: extension
+    attributes:
+      label: Asset Import Navigator version
+    validations:
+      required: true
+  - type: dropdown
+    id: ts-mode
+    attributes:
+      label: TypeScript mode
+      options:
+        - Bundled VS Code TypeScript
+        - Workspace TypeScript (typescript.tsdk)
+        - Native TypeScript / tsgo (js/ts.experimental.useTsgo)
+        - Not sure
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options: [macOS, Windows, Linux]
+    validations:
+      required: true
+  - type: dropdown
+    id: remote
+    attributes:
+      label: Remote
+      options: [None (local), Remote SSH, WSL, Dev Container, Codespaces]
+    validations:
+      required: true
+  - type: textarea
+    id: debug
+    attributes:
+      label: Debug output
+      description: 'Set `"assetImportNavigator.debug": true`, reproduce, and paste the **Asset Import Navigator** output channel.'
+      render: text
+  - type: input
+    id: repro
+    attributes:
+      label: Minimal reproduction
+      description: Link to a repo, or name the `examples/` project that reproduces it.

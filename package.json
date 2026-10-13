@@ -1,23 +1,64 @@
 {
   "name": "asset-import-navigator",
   "displayName": "Asset Import Navigator",
-  "description": "Navigate imported SVG, CSS, SCSS, and other assets to their real source files instead of ambient declaration dead ends.",
-  "version": "0.0.1",
-  "publisher": "Avi Rynkov",
+  "description": "Navigate imported SVG, CSS, SCSS, CSS Modules, and other assets to their real source files, with useful hover previews instead of declaration-file dead ends.",
+  "version": "0.1.0",
+  "preview": true,
+  "publisher": "avirynkov",
   "author": {
     "name": "Avi Rynkov",
     "url": "https://avirynkov.dev"
   },
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/avirynkov/asset-import-navigator.git"
+  },
+  "bugs": {
+    "url": "https://github.com/avirynkov/asset-import-navigator/issues"
+  },
+  "homepage": "https://github.com/avirynkov/asset-import-navigator#readme",
+  "icon": "images/icon.png",
+  "galleryBanner": {
+    "color": "#2b2f77",
+    "theme": "dark"
+  },
   "engines": {
     "vscode": "^1.85.0"
+  },
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": "limited",
+      "description": "In Restricted Mode, workspace values of assetImportNavigator.aliases are ignored so an untrusted folder cannot point resolution or hover previews outside itself. Everything else works; no project code is executed.",
+      "restrictedConfigurations": [
+        "assetImportNavigator.aliases"
+      ]
+    },
+    "virtualWorkspaces": {
+      "supported": false,
+      "description": "Asset navigation resolves files on the local or remote file system (file: scheme); virtual workspaces such as github.dev are not supported."
+    }
   },
   "categories": [
     "Other"
   ],
+  "keywords": [
+    "vite",
+    "svg",
+    "css modules",
+    "scss",
+    "go to definition",
+    "assets",
+    "import",
+    "react",
+    "typescript",
+    "client.d.ts"
+  ],
   "activationEvents": [
     "onLanguage:typescript",
-    "onLanguage:typescriptreact"
+    "onLanguage:typescriptreact",
+    "onLanguage:javascript",
+    "onLanguage:javascriptreact"
   ],
   "main": "./out/extension/extension.js",
   "contributes": {
@@ -69,26 +110,58 @@
           "type": "boolean",
           "default": false,
           "description": "Write mode detection and resolution diagnostics to the Asset Import Navigator OutputChannel (never logs source file contents)."
+        },
+        "assetImportNavigator.hover.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show physical-asset hover content for supported asset imports."
+        },
+        "assetImportNavigator.hover.svgPreview": {
+          "type": "boolean",
+          "default": true,
+          "description": "Embed a sanitized local SVG thumbnail in hover when safe (markdown-image data URI)."
+        },
+        "assetImportNavigator.hover.maxPreviewBytes": {
+          "type": "number",
+          "default": 524288,
+          "minimum": 1,
+          "description": "Maximum SVG file size in bytes for hover preview. Larger files fall back to metadata-only."
         }
       }
     }
   },
   "scripts": {
+    "vscode:prepublish": "npm run compile",
     "compile": "tsc -p .",
+    "lint": "eslint .",
     "typecheck": "tsc -p . --noEmit",
     "watch": "tsc -p . -w",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:integration": "vitest run src/test/integration",
-    "probe:tsserver": "node scripts/phase0-tsserver-probe.mjs"
+    "test:e2e": "npm run compile && vscode-test",
+    "probe:tsserver": "node scripts/phase0-tsserver-probe.mjs",
+    "package": "vsce package"
   },
   "dependencies": {
-    "asset-import-navigator-ts-plugin": "file:./src/tsserver-plugin"
+    "asset-import-navigator-ts-plugin": "file:./src/tsserver-plugin",
+    "typescript": "^5.8.2"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/mocha": "^10.0.10",
     "@types/node": "^22.13.10",
     "@types/vscode": "^1.85.0",
-    "typescript": "^5.8.2",
-    "vitest": "^3.0.9"
+    "@vscode/test-cli": "^0.0.15",
+    "@vscode/test-electron": "^3.1.0",
+    "@vscode/vsce": "^4.0.0",
+    "eslint": "^10.12.0",
+    "globals": "^17.13.0",
+    "mocha": "^12.0.3",
+    "typescript-eslint": "^8.71.2",
+    "vitest": "^5.0.4"
+  },
+  "overrides": {
+    "mocha": "$mocha"
   }
 }

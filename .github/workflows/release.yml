@@ -1,0 +1,111 @@
+name: Release
+
+# Tag pushes (v*) or a manual run only — never pull requests.
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  build:
+    name: Gate, package and audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: xvfb-run -a npm run test:e2e
+      - name: Tag matches package.json version
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: test "v$(node -p "require('./package.json').version")" = "${GITHUB_REF_NAME}"
+      - run: mkdir -p dist && npx vsce package --out dist/
+      - run: node scripts/verify-vsix.mjs dist/*.vsix
+      - run: node scripts/vsix-install-smoke.mjs dist/*.vsix
+      - uses: actions/upload-artifact@v7
+        with:
+          name: vsix
+          path: dist/*.vsix
+          if-no-files-found: error
+
+  github-release:
+    name: Attach tested VSIX to GitHub release
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: vsix
+          path: dist
+      - name: Create or update release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1 \
+            || gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --draft --title "$GITHUB_REF_NAME" --notes ""
+          gh release upload "$GITHUB_REF_NAME" dist/*.vsix --repo "$GITHUB_REPOSITORY" --clobber
+
+  marketplace:
+    name: Publish tested VSIX to Marketplace
+    needs: build
+    # Inert until a maintainer sets the repository variable PUBLISH_TO_MARKETPLACE=true
+    # and configures Azure workload identity federation (no PAT secrets).
+    if: startsWith(github.ref, 'refs/tags/v') && vars.PUBLISH_TO_MARKETPLACE == 'true'
+    runs-on: ubuntu-latest
+    environment: marketplace
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - uses: actions/download-artifact@v8
+        with:
+          name: vsix
+          path: dist
+      - uses: azure/login@v3
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          allow-no-subscriptions: true
+      - run: npx vsce publish --packagePath dist/*.vsix --azure-credential
+
+  openvsx:
+    name: Publish tested VSIX to Open VSX (Cursor, VSCodium, Windsurf)
+    needs: build
+    # Inert until a maintainer sets PUBLISH_TO_OPENVSX=true and registers this
+    # repository as a trusted publisher for the `avirynkov` namespace on open-vsx.org.
+    if: startsWith(github.ref, 'refs/tags/v') && vars.PUBLISH_TO_OPENVSX == 'true'
+    runs-on: ubuntu-latest
+    environment: openvsx
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - uses: actions/download-artifact@v8
+        with:
+          name: vsix
+          path: dist
+      - run: npx --yes ovsx@1.2.0 publish --packagePath dist/*.vsix --trusted-publishing

@@ -1,9 +1,10 @@
 node_modules/
 out/
-docs/
 *.vsix
 .DS_Store
 src/test/fixtures/phase0/node_modules/
 src/test/fixtures/phase0/.tsserver*.log
 src/test/fixtures/phase0/.phase0-*.json
 *.log
+.vscode-test/
+dist/
