@@ -2,6 +2,14 @@
 
 Releases are managed by [release-please](https://github.com/googleapis/release-please). Merging the Release PR updates this file and cuts the `v*` tag.
 
+## [0.0.2](https://github.com/avirynkov/asset-import-navigator/compare/v0.0.1...v0.0.2) (2026-10-18)
+
+
+### Bug Fixes
+
+* use RELEASE_PLEASE_TOKEN so tag pushes trigger release.yml ([adb54b9](https://github.com/avirynkov/asset-import-navigator/commit/adb54b939c11d77b62de4edb11e424560dd83633))
+* use RELEASE_PLEASE_TOKEN so tag pushes trigger release.yml ([6514105](https://github.com/avirynkov/asset-import-navigator/commit/6514105fa8c0dcbb6ba5eb0ed129867e980f5fee))
+
 ## 0.0.1 (2026-10-18)
 
 
