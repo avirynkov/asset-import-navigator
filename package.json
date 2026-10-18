@@ -2,7 +2,7 @@
   "name": "asset-import-navigator",
   "displayName": "Asset Import Navigator",
   "description": "Navigate imported SVG, CSS, SCSS, CSS Modules, and other assets to their real source files, with useful hover previews instead of declaration-file dead ends.",
-  "version": "0.1.0",
+  "version": "0.0.1",
   "preview": true,
   "publisher": "avirynkov",
   "author": {

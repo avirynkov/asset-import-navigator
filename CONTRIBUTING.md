@@ -33,7 +33,7 @@ Rules that keep the extension safe to run alongside TypeScript:
 - Prefer false negatives. A missing file means no result, never a guessed one.
 - The public shapes in `shared/model/` are frozen. Changing them needs fixtures and tests in the same PR.
 
-The full design, including the Mode A / Mode B truth table and the acceptance-criteria IDs (NAV-, HOV-, RES-, NINT-, COMPAT-…), is in [docs/asset-import-navigator-implementation-plan.md](docs/asset-import-navigator-implementation-plan.md).
+Mode A / Mode B behavior and limitations are documented in the [README Compatibility section](README.md#compatibility-mode-a-and-mode-b).
 
 ## Tests
 
@@ -59,6 +59,25 @@ Things the automated tests can't reach (Cmd/Ctrl+Click UI, native TypeScript, ot
 - Keep a PR to one change. Don't mix refactors into feature or fix PRs.
 - Fill in the PR template checklist.
 - CI must pass: lint, typecheck, unit/integration, E2E on macOS/Windows/Linux, and the VSIX package audit.
+- Prefer [Conventional Commits](https://www.conventionalcommits.org/) in the PR title (and squash commit message). release-please uses these to decide the next version and to write the changelog:
+  - `feat:` → minor (or patch while still `< 1.0.0` with our pre-major settings)
+  - `fix:` → patch
+  - `feat!:` / `BREAKING CHANGE:` → minor while `< 1.0.0`, then major after 1.0.0
+  - `chore:`, `docs:`, `ci:`, `test:` → usually no version bump on their own
+- Issue labels such as `skip-changelog` / `breaking` are for triage only; they no longer drive release notes (that was Release Drafter).
+
+## Releasing
+
+Do **not** bump `package.json` or create `v*` tags by hand.
+
+1. Merge normal PRs to `master`.
+2. [release-please](https://github.com/googleapis/release-please) opens or updates a **Release PR** that bumps `package.json`, updates `CHANGELOG.md`, and prepares the GitHub Release.
+3. Merge that Release PR. It creates the `vX.Y.Z` tag and the GitHub Release.
+4. [`.github/workflows/release.yml`](.github/workflows/release.yml) runs on the tag: tests, packages the VSIX, attaches it to the GitHub Release, and (when enabled) publishes to the VS Code Marketplace and Open VSX.
+
+The first published version must be `0.0.1`. If the Release PR proposes something else, add a commit footer `Release-As: 0.0.1` (or squash with that footer) before merging.
+
+Store-specific one-time setup (publisher accounts, GitHub environments/variables, Open VSX first-publish PAT) lives in a **private** maintainer file `PUBLISH-SETUP.local.md` at the repo root. It is gitignored on purpose — do not commit it.
 
 ## Reporting issues
 
