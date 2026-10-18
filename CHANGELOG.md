@@ -2,6 +2,20 @@
 
 Releases are managed by [release-please](https://github.com/googleapis/release-please). Merging the Release PR updates this file and cuts the `v*` tag.
 
+## 0.0.1 (2026-10-18)
+
+
+### Features
+
+* phase 5 asset hover and SVG preview ([7e3f5c8](https://github.com/avirynkov/asset-import-navigator/commit/7e3f5c85e6d3e18c850b8f3a12d7d77cfe40f869))
+
+
+### Bug Fixes
+
+* address code review findings in hover preview, sanitizer and caches ([887fea9](https://github.com/avirynkov/asset-import-navigator/commit/887fea958fb1950ba4e6a59c2a2a293643255d9c))
+* revalidate cached asset resolutions and bound cache growth ([dd6df77](https://github.com/avirynkov/asset-import-navigator/commit/dd6df770a35a9c4f210ac926ed7f819a7c9202dd))
+* ship typescript at runtime and use tsserver's TypeScript in the plugin ([a26ff7c](https://github.com/avirynkov/asset-import-navigator/commit/a26ff7c759d0ec6dcf60d9079373df6b9c682a2d))
+
 ## [0.0.1]
 
 First public preview.
