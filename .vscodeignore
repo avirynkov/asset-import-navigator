@@ -6,7 +6,6 @@ vitest.config.ts
 **/*.ts
 **/*.map
 node_modules/**/test/**
-docs/asset-import-navigator-implementation-plan.md
 .gitignore
 docs/**
 examples/**
@@ -20,3 +19,6 @@ out/test/**
 dist/**
 images/asset-import-logo.svg
 images/asset-import-logo.jpg
+PUBLISH-SETUP.local.md
+release-please-config.json
+.release-please-manifest.json

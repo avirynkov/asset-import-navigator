@@ -1,6 +1,6 @@
 # Repository labels
 
-Create these once (Settings → Labels, or `gh label create <name>`). Release Drafter and the issue forms rely on them.
+Create these once (Settings → Labels, or `gh label create <name>`). Issue forms and triage rely on them. Version bumps and changelog text come from release-please (Conventional Commits), not from these labels.
 
 | Label | Use |
 |---|---|

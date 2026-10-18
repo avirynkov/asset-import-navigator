@@ -1,15 +1,14 @@
 # Changelog
 
-All notable changes to this extension are documented here. The format follows
-[Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project uses [Semantic Versioning](https://semver.org/).
+Releases are managed by [release-please](https://github.com/googleapis/release-please). Merging the Release PR updates this file and cuts the `v*` tag.
 
-## [0.1.0] - Unreleased
+## [0.0.1]
 
-First public preview. (Replace "Unreleased" with the release date when tagging `v0.1.0`.)
+First public preview.
 
-### Added
+### Features
 
-- Go to Definition, Cmd/Ctrl+Click and Peek on supported asset imports open the physical file. This comes from a TypeScript server plugin (Mode A) and needs no configuration.
+- Go to Definition, Cmd/Ctrl+Click and Peek on supported asset imports open the physical file via a TypeScript server plugin (Mode A); no configuration required.
 - Document links on asset import paths (TS/TSX), and a narrow fallback definition provider for environments where the plugin can't load (Mode B, e.g. native TypeScript / tsgo).
 - Asset hover with a sanitized SVG thumbnail, path, size and dimensions; stylesheet hover with module/plain type.
 - Resolution through relative paths, `tsconfig.json` / `jsconfig.json` `paths` (with `extends` and wildcards), and the `assetImportNavigator.aliases` setting. Vite queries (`?react`, `?url`, `?raw`, …) and hashes are stripped.

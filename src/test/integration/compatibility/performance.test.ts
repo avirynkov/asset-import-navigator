@@ -1,7 +1,7 @@
 /**
- * Phase 6 / B.11 (PERF-03): measure resolver latency on representative fixtures.
- * Ceilings are 3× the engineering targets so CI noise does not flake; the
- * measured medians are printed for docs/phase-6-findings.md.
+ * Measure resolver latency on representative fixtures.
+ * Ceilings are 3× the engineering targets so CI noise does not flake;
+ * measured medians are printed to the test output.
  */
 import * as fs from 'node:fs';
 import * as path from 'node:path';

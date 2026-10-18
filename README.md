@@ -7,7 +7,7 @@
 In a Vite + TypeScript/React project, you import assets like this:
 
 ```ts
-import Icon from '@/assets/icons/exceptional_trader.svg?react';
+import Icon from '@/assets/icons/sun_icon.svg?react';
 import styles from './Card.module.scss';
 import './global.scss';
 ```
