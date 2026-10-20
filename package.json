@@ -145,7 +145,7 @@
   },
   "dependencies": {
     "asset-import-navigator-ts-plugin": "file:./src/tsserver-plugin",
-    "typescript": "^5.8.2"
+    "typescript": "^7.0.2"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
